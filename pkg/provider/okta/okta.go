@@ -44,6 +44,9 @@ const (
 
 var logger = logrus.WithField("provider", "okta")
 
+// exported global vars
+var DocIsFormRedirectToTarget func(doc *goquery.Document, target string) bool = docIsFormRedirectToTarget
+var ExtractSAMLResponse func(doc *goquery.Document) (v string, ok bool) = extractSAMLResponse
 var (
 	supportedMfaOptions = map[string]string{
 		IdentifierDuoMfa:          "DUO MFA authentication",
@@ -535,9 +538,9 @@ func (oc *Client) follow(ctx context.Context, req *http.Request, loginDetails *c
 
 	var handler func(context.Context, *goquery.Document) (context.Context, *http.Request, error)
 
-	if docIsFormRedirectToTarget(doc, oc.targetURL) {
+	if DocIsFormRedirectToTarget(doc, oc.targetURL) {
 		logger.WithField("type", "saml-response-to-aws").Debug("doc detect")
-		if samlResponse, ok := extractSAMLResponse(doc); ok {
+		if samlResponse, ok := ExtractSAMLResponse(doc); ok {
 			decodedSamlResponse, err := base64.StdEncoding.DecodeString(samlResponse)
 			if err != nil {
 				return "", errors.Wrap(err, "failed to decode saml-response")
